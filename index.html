@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pro Design Studio - Advanced</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Lato&family=Montserrat&family=Oswald&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #8338ec;
+      --primary-dark: #6f2abd;
+      --bg: #f5f6fa;
+      --panel-bg: #fff;
+      --border: #e0e0e0;
+      --shadow: 0 4px 24px rgba(131,56,236,0.08);
+      --radius: 12px;
+    }
+    body {
+      background: var(--bg);
+      font-family: 'Montserrat', 'Roboto', sans-serif;
+      margin: 0;
+      color: #222;
+    }
+    .top-bar {
+      background: var(--panel-bg);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(131,56,236,0.04);
+      z-index: 10;
+    }
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .app-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 1px;
+    }
+    .action-buttons button, .action-buttons .file-upload-label {
+      margin-left: 10px;
+    }
+    .main-container {
+      display: flex;
+      height: calc(100vh - 60px);
+      min-height: 400px;
+    }
+    .left-panel, .right-panel {
+      background: var(--panel-bg);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      margin: 10px 0;
+      transition: width 0.2s, box-shadow 0.2s, background 0.2s;
+      min-width: 200px;
+      max-width: 400px;
+      width: 260px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-resizer {
+      width: 8px;
+      cursor: ew-resize;
+      background: linear-gradient(90deg, #eee, #ccc);
+      margin: 0 2px;
+      border-radius: 4px;
+    }
+    #canvas-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      transition: background 0.2s;
+      min-width: 200px;
+    }
+    #container {
+      background: #fff;
+      box-shadow: 0 0 25px rgba(0,0,0,0.10);
+      border-radius: 10px;
+    }
+    button, .file-upload-label {
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: 0 2px 8px rgba(131,56,236,0.10);
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button:hover, .file-upload-label:hover {
+      background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+      box-shadow: 0 4px 16px rgba(131,56,236,0.18);
+      transform: translateY(-2px) scale(1.03);
+    }
+    button[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      left: 50%;
+      top: 110%;
+      transform: translateX(-50%);
+      background: #222;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 10;
+      opacity: 0.95;
+    }
+    input[type="file"] { display: none; }
+    .left-panel-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab-button {
+      flex: 1; padding: 15px; text-align: center; background: none; border: none;
+      cursor: pointer; font-weight: 600; color: var(--primary-dark); border-bottom: 3px solid transparent;
+      transition: color 0.2s, border-bottom 0.2s;
+    }
+    .tab-button.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    #photo-search-input { width: calc(100% - 24px); padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 15px; }
+    #photo-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    #photo-results img { width: 100%; height: 100px; object-fit: cover; cursor: pointer; border-radius: 4px; }
+    .panel-header { padding: 15px; font-weight: 600; border-bottom: 1px solid var(--border); }
+    .panel-content { padding: 15px; overflow-y: auto; }
+    #layers-list { list-style: none; padding: 0; margin: 0; }
+    .layer-item { display: flex; align-items: center; padding: 10px; border: 1px solid transparent; border-radius: var(--radius); margin-bottom: 5px; }
+    .layer-item.selected { background-color: #e8f0fe; border-color: var(--primary); }
+    .layer-name { flex-grow: 1; margin-left: 10px; }
+    .layer-actions button { width: auto; padding: 5px; margin: 0 2px; border: none; background: none; font-size: 14px; color: var(--primary-dark);}
+    .inspector-group { margin-bottom: 20px; }
+    .inspector-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+    input[type="color"], input[type="range"], input[type="number"], select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
+    #inspector-placeholder { color: #999; text-align: center; margin-top: 50px; }
+    .font-style-buttons button { padding: 8px 12px; width: auto; display: inline-flex; }
+    .font-style-buttons button.active { background-color: #e8f0fe; color: var(--primary); }
+    #snackbar {
+      visibility: hidden;
+      min-width: 200px;
+      background: var(--primary);
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 12px;
+      position: fixed;
+      z-index: 9999;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      font-size: 16px;
+      box-shadow: 0 2px 12px rgba(131,56,236,0.18);
+      transition: visibility 0s, opacity 0.3s linear;
+      opacity: 0;
+    }
+    #snackbar.show {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.6); z-index: 1000;
+      display: none; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background-color: var(--panel-bg);
+      padding: 30px; border-radius: var(--radius);
+      width: 80%; max-width: 900px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .modal-close-btn {
+      position: absolute; top: 15px; right: 20px;
+      font-size: 30px; font-weight: bold; color: #aaa;
+      cursor: pointer; border: none; background: none;
+    }
+    .modal-close-btn:hover { color: #333; }
+    .modal-content h2 { margin-top: 0; }
+    #preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px; max-height: 60vh; overflow-y: auto;
+    }
+    .preset-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .preset-item:hover {
+      border-color: var(--primary);
+      transform: translateY(-5px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .preset-item i { font-size: 32px; color: var(--primary); margin-bottom: 15px; }
+    .preset-name { font-weight: 600; margin-bottom: 5px; }
+    .preset-dims { font-size: 14px; color: var(--primary-dark); }
+    @media (max-width: 900px) {
+      .left-panel, .right-panel {
+        min-width: 60px;
+        width: 60px;
+        max-width: 80px;
+        padding: 0;
+        font-size: 0;
+      }
+      .panel-header, .panel-content, .left-panel-tabs {
+        display: none;
+      }
+      #canvas-wrapper {
+        padding: 2px;
+      }
+    }
+  </style>
+  <script src="https://unpkg.com/konva@9.3.6/konva.min.js"></script>
+</head>
+<body>
+  <div id="snackbar"></div>
+  <div id="size-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close-btn">×</button>
+      <h2>Choose a size</h2>
+      <div id="preset-grid"></div>
+    </div>
+  </div>
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button id="create-btn" title="New Design"><i class="fa-solid fa-plus"></i> Create</button>
+      <div class="app-title">Pro Studio</div>
+    </div>
+    <div class="action-buttons">
+      <button id="undo-btn" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+      <button id="redo-btn" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+      <button id="save-json-btn" title="Save Design"><i class="fa-solid fa-save"></i> Save</button>
+      <label for="load-json-input" class="file-upload-label" style="display:inline-block; width:auto; margin-bottom:0;" title="Load Design"><i class="fa-solid fa-folder-open"></i> Load</label>
+      <input type="file" id="load-json-input" accept=".json" />
+      <button id="export-btn" title="Export as PNG"><i class="fa-solid fa-camera"></i> Export PNG</button>
+      <button id="export-svg-btn" title="Export as SVG"><i class="fa-solid fa-file-code"></i> Export SVG</button>
+      <button id="brush-btn" title="Free Draw"><i class="fa-solid fa-pen"></i> Brush</button>
+      <button id="group-btn" title="Group"><i class="fa-solid fa-object-group"></i> Group</button>
+      <button id="ungroup-btn" title="Ungroup"><i class="fa-solid fa-object-ungroup"></i> Ungroup</button>
+    </div>
+  </div>
+  <div class="main-container">
+    <div class="left-panel" id="leftPanel">
+      <div class="left-panel-tabs">
+        <button class="tab-button active" data-tab="elements">Elements</button>
+        <button class="tab-button" data-tab="templates">Templates</button>
+      </div>
+      <div id="elements" class="tab-content active panel-content">
+        <button id="add-rect-btn" title="Add Rectangle"><i class="fa-solid fa-square"></i> Rectangle</button>
+        <button id="add-circle-btn" title="Add Circle"><i class="fa-solid fa-circle"></i> Circle</button>
+        <button id="add-text-btn" title="Add Text"><i class="fa-solid fa-font"></i> Text</button>
+        <label for="image-upload" class="file-upload-label" title="Upload Image"><i class="fa-solid fa-image"></i> Upload Image</label>
+        <input type="file" id="image-upload" accept="image/*"/>
+      </div>
+      <div id="templates" class="tab-content panel-content">
+        <button class="template-btn" data-template="social-post">Social Media Post</button>
+        <button class="template-btn" data-template="business-card">Business Card</button>
+      </div>
+      <div class="panel-header" style='border-top: 1px solid var(--border);'>Layers</div>
+      <div class="panel-content" id="layers-panel">
+        <ul id="layers-list"></ul>
+      </div>
+    </div>
+    <div class="panel-resizer" id="panelResizer"></div>
+    <div id="canvas-wrapper"><div id="container"></div></div>
+    <div class="right-panel" id="rightPanel">
+      <div class="panel-header">Inspector</div>
+      <div class="panel-content" id="inspector-panel">
+        <div id="inspector-placeholder">Select an item to edit</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Panel Resizer
+    const leftPanel = document.getElementById('leftPanel');
+    const resizer = document.getElementById('panelResizer');
+    let isResizing = false;
+    resizer.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      document.body.style.cursor = 'ew-resize';
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+      let newWidth = e.clientX - leftPanel.getBoundingClientRect().left;
+      if (newWidth < 160) newWidth = 160;
+      if (newWidth > 400) newWidth = 400;
+      leftPanel.style.width = newWidth + 'px';
+    });
+    window.addEventListener('mouseup', function() {
+      isResizing = false;
+      document.body.style.cursor = '';
+    });
+
+    // Snackbar
+    function showSnackbar(msg) {
+      const sb = document.getElementById('snackbar');
+      sb.textContent = msg;
+      sb.className = "show";
+      setTimeout(() => { sb.className = sb.className.replace("show", ""); }, 2200);
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.onclick = function() {
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      }
+    });
+
+    // Modal Logic
+    const sizePresets = [
+      { name: 'Instagram Post', width: 1080, height: 1080, icon: 'fa-brands fa-instagram' },
+      { name: 'Instagram Story', width: 1080, height: 1920, icon: 'fa-brands fa-instagram' },
+      { name: 'Facebook Post', width: 940, height: 788, icon: 'fa-brands fa-facebook' },
+      { name: 'Facebook Cover', width: 851, height: 315, icon: 'fa-brands fa-facebook' },
+      { name: 'YouTube Thumbnail', width: 1280, height: 720, icon: 'fa-brands fa-youtube' },
+      { name: 'Twitter Post', width: 1024, height: 512, icon: 'fa-brands fa-twitter' },
+      { name: 'Pinterest Pin', width: 1000, height: 1500, icon: 'fa-brands fa-pinterest' },
+      { name: 'Presentation', width: 1920, height: 1080, icon: 'fa-solid fa-display' },
+    ];
+    const modal = document.getElementById('size-modal');
+    const createBtn = document.getElementById('create-btn');
+    const closeModalBtn = document.querySelector('.modal-close-btn');
+    const presetGrid = document.getElementById('preset-grid');
+    function populatePresets() {
+      presetGrid.innerHTML = '';
+      sizePresets.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'preset-item';
+        item.dataset.width = p.width;
+        item.dataset.height = p.height;
+        item.innerHTML = `<i class="${p.icon}"></i><div class="preset-name">${p.name}</div><div class="preset-dims">${p.width} × ${p.height} px</div>`;
+        presetGrid.appendChild(item);
+      });
+    }
+    function createNewCanvas(width, height) {
+      stage.destroy();
+      stage = new Konva.Stage({ container: 'container', width: width, height: height });
+      layer = new Konva.Layer();
+      stage.add(layer);
+      tr = new Konva.Transformer({ borderStroke: '#8338ec', anchorStroke: '#8338ec', anchorFill: '#ffffff', anchorSize: 10 });
+      layer.add(tr);
+      guideLayer = new Konva.Layer();
+      stage.add(guideLayer);
+      selectShapes([]);
+      attachStageListeners();
+      showSnackbar("New canvas created!");
+    }
+    createBtn.addEventListener('click', () => { modal.style.display = 'flex'; });
+    closeModalBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+    modal.addEventListener('click', (e) => { if (e.target === modal) { modal.style.display = 'none'; } });
+    presetGrid.addEventListener('click', (e) => {
+      const presetItem = e.target.closest('.preset-item');
+      if (presetItem) {
+        const width = parseInt(presetItem.dataset.width, 10);
+        const height = parseInt(presetItem.dataset.height, 10);
+        createNewCanvas(width, height);
+        modal.style.display = 'none';
+      }
+    });
+
+    // Konva Setup
+    let stage = new Konva.Stage({ container: 'container', width: 800, height: 600 });
+    let layer = new Konva.Layer();
+    stage.add(layer);
+    let tr = new Konva.Transformer({ borderStroke: '#8338ec', anchorStroke: '#8338ec', anchorFill: '#ffffff', anchorSize: 10 });
+    layer.add(tr);
+    let guideLayer = new Konva.Layer();
+    stage.add(guideLayer);
+    let selectedShapes = [];
+    let isBrush = false;
+    let isDrawing = false;
+    let currentLine = null;
+
+    // Undo/Redo
+    let history = [];
+    let historyStep = -1;
+    function saveHistory() {
+      history = history.slice(0, historyStep + 1);
+      history.push(stage.toJSON());
+      historyStep++;
+    }
+    function undo() {
+      if (historyStep > 0) {
+        historyStep--;
+        stage.destroyChildren();
+        Konva.Node.create(history[historyStep], 'container');
+        showSnackbar("Undo");
+      }
+    }
+    function redo() {
+      if (historyStep < history.length - 1) {
+        historyStep++;
+        stage.destroyChildren();
+        Konva.Node.create(history[historyStep], 'container');
+        showSnackbar("Redo");
+      }
+    }
+    document.getElementById('undo-btn').onclick = undo;
+    document.getElementById('redo-btn').onclick = redo;
+
+    // Layer Selection & Inspector
+    function selectShapes(shapes) {
+      selectedShapes = shapes;
+      tr.nodes(shapes);
+      updateInspector(shapes.length === 1 ? shapes[0] : null);
+      updateLayersPanel();
+    }
+    function attachStageListeners() {
+      stage.on('click tap', (e) => {
+        if (e.target === stage) {
+          selectShapes([]);
+          return;
+        }
+        if (e.target.hasName('shape-object')) {
+          const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
+          const isSelected = tr.nodes().indexOf(e.target) >= 0;
+          if (!metaPressed && !isSelected) selectShapes([e.target]);
+          else if (metaPressed && !isSelected) selectShapes([...tr.nodes(), e.target]);
+          else if (metaPressed && isSelected) {
+            const nodes = tr.nodes().slice();
+            nodes.splice(nodes.indexOf(e.target), 1);
+            selectShapes(nodes);
+          }
+        }
+      });
+    }
+    attachStageListeners();
+
+    // Add Elements
+    document.getElementById('add-rect-btn').onclick = function() {
+      const rect = new Konva.Rect({
+        x: 100, y: 100, width: 180, height: 120, fill: '#8338ec', draggable: true, name: 'shape-object', cornerRadius: 10, shadowBlur: 8
+      });
+      layer.add(rect);
+      layer.draw();
+      selectShapes([rect]);
+      saveHistory();
+    };
+    document.getElementById('add-circle-btn').onclick = function() {
+      const circle = new Konva.Circle({
+        x: 200, y: 200, radius: 60, fill: '#6f2abd', draggable: true, name: 'shape-object', shadowBlur: 8
+      });
+      layer.add(circle);
+      layer.draw();
+      selectShapes([circle]);
+      saveHistory();
+    };
+    document.getElementById('add-text-btn').onclick = function() {
+      const text = new Konva.Text({
+        text: 'Double Click to Edit', x: 120, y: 120, fontSize: 32, fill: '#222', draggable: true, name: 'shape-object', fontFamily: 'Montserrat'
+      });
+      layer.add(text);
+      layer.draw();
+      selectShapes([text]);
+      saveHistory();
+    };
+    document.getElementById('image-upload').onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new window.Image();
+        img.onload = function() {
+          const konvaImg = new Konva.Image({
+            image: img, x: 100, y: 100, width: img.width > 300 ? 300 : img.width, height: img.height > 300 ? 300 : img.height, draggable: true, name: 'shape-object'
+          });
+          konvaImg.cache();
+          konvaImg.filters([Konva.Filters.Brighten, Konva.Filters.Contrast]);
+          layer.add(konvaImg);
+          layer.draw();
+          selectShapes([konvaImg]);
+          saveHistory();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Brush Tool
+    document.getElementById('brush-btn').onclick = function() {
+      isBrush = !isBrush;
+      showSnackbar(isBrush ? "Brush tool ON" : "Brush tool OFF");
+    };
+    stage.on('mousedown touchstart', function() {
+      if (!isBrush) return;
+      isDrawing = true;
+      const pos = stage.getPointerPosition();
+      currentLine = new Konva.Line({
+        stroke: '#000',
+        strokeWidth: 3,
+        points: [pos.x, pos.y],
+        lineCap: 'round',
+        lineJoin: 'round',
+        draggable: true,
+        name: 'shape-object'
+      });
+      layer.add(currentLine);
+    });
+    stage.on('mousemove touchmove', function() {
+      if (!isBrush || !isDrawing) return;
+      const pos = stage.getPointerPosition();
+      let newPoints = currentLine.points().concat([pos.x, pos.y]);
+      currentLine.points(newPoints);
+      layer.batchDraw();
+    });
+    stage.on('mouseup touchend', function() {
+      if (!isBrush) return;
+      isDrawing = false;
+      saveHistory();
+    });
+
+    // Group/Ungroup
+    document.getElementById('group-btn').onclick = function() {
+      if (selectedShapes.length < 2) {
+        showSnackbar("Select 2+ items to group");
+        return;
+      }
+      const group = new Konva.Group({ draggable: true, name: 'shape-object' });
+      selectedShapes.forEach(shape => {
+        group.add(shape);
+      });
+      layer.add(group);
+      selectShapes([group]);
+      layer.draw();
+      saveHistory();
+    };
+    document.getElementById('ungroup-btn').onclick = function() {
+      if (selectedShapes.length === 1 && selectedShapes[0].className === "Group") {
+        const group = selectedShapes[0];
+        group.children.each(child => {
+          layer.add(child);
+        });
+        group.destroy();
+        selectShapes([]);
+        layer.draw();
+        saveHistory();
+      } else {
+        showSnackbar("Select a group to ungroup");
+      }
+    };
+
+    // Layers Panel
+    function updateLayersPanel() {
+      const list = document.getElementById('layers-list');
+      if (!layer || layer.children.length === 0) {
+        list.innerHTML = "<li style='color:#aaa;text-align:center;padding:20px;'>No layers yet.<br>Add elements to get started!</li>";
+        return;
+      }
+      list.innerHTML = '';
+      layer.children.each((child, i) => {
+        if (child === tr) return;
+        let lockIcon = child.draggable() ? '🔓' : '🔒';
+        let visIcon = child.visible() ? '👁️' : '🚫';
+        const li = document.createElement('li');
+        li.className = 'layer-item' + (selectedShapes.includes(child) ? ' selected' : '');
+        li.onclick = () => selectShapes([child]);
+        li.innerHTML = `
+          <span class="layer-name">${child.className}</span>
+          <span class="layer-actions">
+            <button onclick="toggleLock(${i}); event.stopPropagation();">${lockIcon}</button>
+            <button onclick="toggleVisible(${i}); event.stopPropagation();">${visIcon}</button>
+            <button onclick="this.parentNode.parentNode.remove(); layer.children[${i}].destroy(); layer.draw(); event.stopPropagation();">🗑️</button>
+          </span>
+        `;
+        list.appendChild(li);
+      });
+    }
+    function toggleLock(i) {
+      const shape = layer.children[i];
+      shape.draggable(!shape.draggable());
+      updateLayersPanel();
+      layer.draw();
+    }
+    function toggleVisible(i) {
+      const shape = layer.children[i];
+      shape.visible(!shape.visible());
+      updateLayersPanel();
+      layer.draw();
+    }
+    window.toggleLock = toggleLock;
+    window.toggleVisible = toggleVisible;
+
+    // Inspector Panel
+    function updateInspector(shape) {
+      const panel = document.getElementById('inspector-panel');
+      if (!shape) {
+        panel.innerHTML = `<div id="inspector-placeholder">Select an item to edit</div>`;
+        return;
+      }
+      let html = '';
+      if (shape.className === 'Rect' || shape.className === 'Circle') {
+        html += `<div class="inspector-group">
+          <label>Fill Color</label>
+          <input type="color" id="fillColorPicker" value="${Konva.Util.getRGB(shape.fill())}">
+        </div>`;
+        html += `<div class="inspector-group">
+          <label>Border Width</label>
+          <input type="number" id="borderWidth" value="${shape.strokeWidth()||0}" min="0" max="20">
+        </div>`;
+        html += `<div class="inspector-group">
+          <label>Border Color</label>
+          <input type="color" id="borderColor" value="${Konva.Util.getRGB(shape.stroke()||'#000000')}">
+        </div>`;
+      }
+      if (shape.className === 'Text') {
+        html += `<div class="inspector-group">
+          <label>Text</label>
+          <input type="text" id="textEdit" value="${shape.text()}">
+        </div>
+        <div class="inspector-group">
+          <label>Font Size</label>
+          <input type="number" id="fontSizeEdit" value="${shape.fontSize()}" min="10" max="200">
+        </div>
+        <div class="inspector-group">
+          <label>Color</label>
+          <input type="color" id="fillColorPicker" value="${Konva.Util.getRGB(shape.fill())}">
+        </div>
+        <div class="inspector-group">
+          <label>Shadow</label>
+          <input type="checkbox" id="shadowToggle" ${shape.shadowBlur() ? 'checked' : ''}> Enable
+        </div>`;
+      }
+      if (shape.className === 'Image') {
+        html += `<div class="inspector-group">
+          <label>Brightness</label>
+          <input type="range" min="-1" max="1" step="0.01" id="brightnessSlider" value="${shape.brightness()||0}">
+        </div>
+        <div class="inspector-group">
+          <label>Contrast</label>
+          <input type="range" min="-1" max="1" step="0.01" id="contrastSlider" value="${shape.contrast()||0}">
+        </div>`;
+      }
+      panel.innerHTML = html;
+      if (panel.querySelector('#fillColorPicker')) {
+        panel.querySelector('#fillColorPicker').oninput = function(e) {
+          shape.fill(e.target.value);
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#borderWidth')) {
+        panel.querySelector('#borderWidth').oninput = function(e) {
+          shape.strokeWidth(Number(e.target.value));
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#borderColor')) {
+        panel.querySelector('#borderColor').oninput = function(e) {
+          shape.stroke(e.target.value);
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#textEdit')) {
+        panel.querySelector('#textEdit').oninput = function(e) {
+          shape.text(e.target.value);
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#fontSizeEdit')) {
+        panel.querySelector('#fontSizeEdit').oninput = function(e) {
+          shape.fontSize(Number(e.target.value));
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#shadowToggle')) {
+        panel.querySelector('#shadowToggle').onchange = function(e) {
+          shape.shadowBlur(e.target.checked ? 8 : 0);
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#brightnessSlider')) {
+        panel.querySelector('#brightnessSlider').oninput = function(e) {
+          shape.brightness(Number(e.target.value));
+          layer.draw();
+          saveHistory();
+        };
+      }
+      if (panel.querySelector('#contrastSlider')) {
+        panel.querySelector('#contrastSlider').oninput = function(e) {
+          shape.contrast(Number(e.target.value));
+          layer.draw();
+          saveHistory();
+        };
+      }
+    }
+
+    // Save/Load/Export
+    document.getElementById('save-json-btn').onclick = function() {
+      const data = stage.toJSON();
+      const blob = new Blob([data], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "design.json";
+      a.click();
+      showSnackbar("Design saved!");
+    };
+    document.getElementById('load-json-input').onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        stage.destroyChildren();
+        Konva.Node.create(evt.target.result, 'container');
+        showSnackbar("Design loaded!");
+      };
+      reader.readAsText(file);
+    };
+    document.getElementById('export-btn').onclick = function() {
+      const dataURL = stage.toDataURL({ pixelRatio: 2 });
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = "design.png";
+      a.click();
+      showSnackbar("Exported as PNG!");
+    };
+    document.getElementById('export-svg-btn').onclick = function() {
+      const svgData = stage.toSVG();
+      const blob = new Blob([svgData], {type: "image/svg+xml"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "design.svg";
+      a.click();
+      showSnackbar("Exported as SVG!");
+    };
+
+    // Templates
+    const templates = {
+      'social-post': '{"attrs":{"width":1080,"height":1080},"className":"Stage","children":[{"attrs":{},"className":"Layer","children":[{"attrs":{"x":540,"y":950,"width":800,"height":150,"fill":"#8338ec","draggable":true,"name":"shape-object"},"className":"Rect"},{"attrs":{"text":"Your Event","x":100,"y":150,"fontSize":120,"fill":"#333","draggable":true,"name":"shape-object","fontFamily":"Oswald"},"className":"Text"}]}]}',
+      'business-card': '{"attrs":{"width":850,"height":500},"className":"Stage","children":[{"attrs":{},"className":"Layer","children":[{"attrs":{"x":50,"y":50,"width":100,"height":100,"fill":"#2c3e50","draggable":true,"name":"shape-object"},"className":"Rect"},{"attrs":{"text":"Your Name","x":170,"y":60,"fontSize":40,"fill":"#2c3e50","draggable":true,"name":"shape-object","fontFamily":"Lato","fontStyle":"bold"},"className":"Text"},{"attrs":{"text":"Company Name","x":170,"y":110,"fontSize":25,"fill":"#34495e","draggable":true,"name":"shape-object","fontFamily":"Lato"},"className":"Text"}]}]}'
+    };
+    document.querySelectorAll('.template-btn').forEach(btn => {
+      btn.onclick = function() {
+        const t = templates[btn.dataset.template];
+        if (t) {
+          stage.destroyChildren();
+          Konva.Node.create(t, 'container');
+          showSnackbar("Template loaded!");
+        }
+      }
+    });
+
+    // Initial Calls
+    populatePresets();
+    updateLayersPanel();
+    saveHistory();
+  </script>
+</body>
+</html>
